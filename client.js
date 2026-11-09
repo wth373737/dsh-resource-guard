@@ -198,14 +198,23 @@ window.__ModuleLoader__.load({
       const [status, setStatus] = useState('')
       const [busy, setBusy] = useState(false)
 
-      const load = useCallback(() => {
+      const load = useCallback((attempt = 0) => {
         call('/state')
           .then((payload) => {
             setState(payload)
             setDraft(payload.values)
             setError('')
           })
-          .catch((err) => setError(err.message))
+          .catch((err) => {
+            // The Host registers this route only once the web server is up, so a
+            // 404 right after a restart is expected rather than fatal.
+            if (/HTTP 404/.test(err.message) && attempt < 6) {
+              setError(t('接口尚未就绪，正在重试…', 'API not ready yet, retrying…'))
+              setTimeout(() => load(attempt + 1), 1500)
+              return
+            }
+            setError(err.message)
+          })
       }, [])
 
       useEffect(() => {

@@ -11,10 +11,11 @@ import { analyzeCall } from './lib/estimate.js'
 import { judge, budgetText } from './lib/verdict.js'
 import { recommend, renderRecommendation } from './lib/tune.js'
 import { registerUiApi } from './lib/ui-route.js'
+import { whenService } from './lib/when-service.js'
 
 export const inject = ['tools']
 
-export const VERSION = '0.3.0'
+export const VERSION = '0.3.1'
 
 // Loaded at module scope: the settings form is driven by this schema, and a
 // second schemastery copy would produce something the Host cannot project.
@@ -70,26 +71,43 @@ export function apply(ctx, raw) {
   ctx.effect(() => () => probe.dispose())
   ctx.effect(() => () => history.dispose())
 
-  registerUiApi(ctx, {
-    version: VERSION,
-    config,
-    probe,
-    history,
-    log,
-    directory,
-    recommendationFile: path.join(directory, 'recommendation.md'),
-    effectivePerWorker,
-    recommendation: () => lastRecommendation,
-  })
+  registerUiApiLater()
 
-  const systemPrompt = ctx.get('systemPrompt')
-  if (systemPrompt && config.injectBudget) {
-    ctx.effect(() =>
-      systemPrompt.context({
-        name: 'resource-guard-budget',
-        order: 150,
-        text: () => safeBudgetText(),
-      }),
+  function registerUiApiLater() {
+    whenService(
+      ctx,
+      'webServer',
+      () => {
+        registerUiApi(ctx, {
+          version: VERSION,
+          config,
+          probe,
+          history,
+          log,
+          directory,
+          recommendationFile: path.join(directory, 'recommendation.md'),
+          effectivePerWorker,
+          recommendation: () => lastRecommendation,
+        })
+      },
+      log,
+    )
+  }
+
+  if (config.injectBudget) {
+    whenService(
+      ctx,
+      'systemPrompt',
+      (systemPrompt) => {
+        ctx.effect(() =>
+          systemPrompt.context({
+            name: 'resource-guard-budget',
+            order: 150,
+            text: () => safeBudgetText(),
+          }),
+        )
+      },
+      log,
     )
   }
 
