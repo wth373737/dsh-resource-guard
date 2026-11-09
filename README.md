@@ -78,6 +78,8 @@ The page shows the live budget (commit, VRAM, safe concurrency), the hardware-de
 
 After installing a new version, refresh the page once — the client bundle is loaded at boot.
 
+The page follows the system language (`navigator.language`): a Chinese system renders the Chinese page, anything else English. It is decided when the page loads, so changing the system language needs a reload.
+
 ### Recommendation document
 
 At startup the plugin measures the machine and writes `$DSH_HOME/resource-guard/recommendation.md`: the recommended thresholds plus, for every one, the hardware fact it came from. For example:
@@ -189,6 +191,8 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 页面显示实时预算（提交内存、显存、安全并发）、硬件推导建议（带「填入推荐值」），以及每个阈值的可编辑字段和说明。读写走一条带自定义头的同源路由（`/resource-guard/api`，要求 `x-resource-guard-ui`），由它调用 Host 的 settings 服务，所以保存的值和手改配置完全等价。
 
 装新版本后刷新一次页面——客户端 bundle 在启动时加载。
+
+页面跟随系统语言（`navigator.language`）：中文系统显示中文，其余英文。语言在页面加载时确定，改完系统语言需要刷新。
 
 ### 配置依据文档
 

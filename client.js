@@ -13,13 +13,31 @@ window.__ModuleLoader__.load({
     const API = '/resource-guard/api'
     const UI_HEADER = 'x-resource-guard-ui'
 
+    // Follow the system language, like the other pages do. `document.documentElement.lang`
+    // is the app shell's own value and is not the user's language, so it is only a last resort.
     const LANG = (() => {
-      try {
-        const raw = document.documentElement.lang || navigator.language || 'en'
-        return String(raw).toLowerCase().startsWith('zh') ? 'zh' : 'en'
-      } catch {
-        return 'en'
+      const resolve = (raw) => {
+        const value = String(raw || '').trim().toLowerCase()
+        if (value.length === 0) return null
+        return value.startsWith('zh') ? 'zh' : 'en'
       }
+      try {
+        const preference = []
+        if (typeof navigator !== 'undefined') {
+          if (Array.isArray(navigator.languages)) preference.push(...navigator.languages)
+          preference.push(navigator.language)
+        }
+        if (typeof document !== 'undefined' && document.documentElement) {
+          preference.push(document.documentElement.lang)
+        }
+        for (const candidate of preference) {
+          const resolved = resolve(candidate)
+          if (resolved) return resolved
+        }
+      } catch {
+        // Fall through to the default below.
+      }
+      return 'en'
     })()
     const t = (zh, en) => (LANG === 'zh' ? zh : en)
 
