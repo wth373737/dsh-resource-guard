@@ -1,9 +1,9 @@
 {
   "name": "@local/dsh-resource-guard",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Predict and gate memory/VRAM-heavy tool calls, and tune concurrency to this machine.",
+  "description": "Predict and gate memory/VRAM-heavy tool calls, tune concurrency to this machine, and expose the thresholds in Settings.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -11,11 +11,13 @@
   },
   "exports": {
     ".": "./index.js",
+    "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
+    "client.js",
     "lib/*.js",
     "cordis.patch.yml",
     "locale/*.json",
@@ -26,6 +28,10 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
     }
   }
 }

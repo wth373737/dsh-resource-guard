@@ -10,11 +10,14 @@ import { History } from './lib/history.js'
 import { analyzeCall } from './lib/estimate.js'
 import { judge, budgetText } from './lib/verdict.js'
 import { recommend, renderRecommendation } from './lib/tune.js'
+import { registerUiApi } from './lib/ui-route.js'
 
 export const inject = ['tools']
 
-// Loaded at module scope: the settings page is projected from this schema, and
-// the projection only accepts the Harness's own schemastery instance.
+export const VERSION = '0.3.0'
+
+// Loaded at module scope: the settings form is driven by this schema, and a
+// second schemastery copy would produce something the Host cannot project.
 const SCHEMA = await loadSchemastery()
 export const Config = buildConfig(SCHEMA)
 
@@ -59,12 +62,25 @@ export function apply(ctx, raw) {
   const active = new Map()
   let ticker = null
   let tuned = false
+  let lastRecommendation = null
 
   probe.onHardware = () => scheduleTune()
 
   probe.start()
   ctx.effect(() => () => probe.dispose())
   ctx.effect(() => () => history.dispose())
+
+  registerUiApi(ctx, {
+    version: VERSION,
+    config,
+    probe,
+    history,
+    log,
+    directory,
+    recommendationFile: path.join(directory, 'recommendation.md'),
+    effectivePerWorker,
+    recommendation: () => lastRecommendation,
+  })
 
   const systemPrompt = ctx.get('systemPrompt')
   if (systemPrompt && config.injectBudget) {
@@ -110,6 +126,11 @@ export function apply(ctx, raw) {
       const file = path.join(directory, 'recommendation.md')
       fs.mkdirSync(directory, { recursive: true })
       fs.writeFileSync(file, text, 'utf8')
+      lastRecommendation = {
+        values: result.values,
+        facts: result.facts,
+        at: new Date().toISOString(),
+      }
       log('info', 'recommendation written', { path: file, askRatio: result.values.askRatio })
       if (config.autoTune === 'apply') applyRecommendation(result.values, snapshot)
     } catch (error) {

@@ -70,7 +70,13 @@ Set these under `config` in the bundle's `cordis.patch.yml`; the plugin manager 
 
 ### Settings page
 
-Installing the bundle adds a **Settings → Resource Guard** form generated from the plugin's `Config` schema. Each field carries its explanation as help text, and changes apply live — no YAML editing needed.
+Installing the bundle adds **Settings → Resource Guard**.
+
+That page is contributed by the bundle's **client half** (`dsh.client` + `client.js`), not generated from the Host config: everything under Settings is registered by client plugins into `settings.section`, so a Host-only plugin gets no page at all — its configuration exists but nothing can show or change it. v0.3.0 adds the client half for that reason.
+
+The page shows the live budget (commit, VRAM, safe concurrency), the hardware-derived suggestion with a *fill recommended values* action, and every threshold as an editable field with its explanation. It reads and writes through a fenced same-origin route (`/resource-guard/api`, requiring the `x-resource-guard-ui` header) that calls the settings service on the Host, so saved values land in the profile config exactly like a hand edit.
+
+After installing a new version, refresh the page once — the client bundle is loaded at boot.
 
 ### Recommendation document
 
@@ -176,7 +182,13 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 
 ### 设置页
 
-装上 bundle 之后，**设置 → 资源门禁** 会出现一个由 `Config` schema 自动生成的表单，每个字段都带说明文字，改完即生效，不用碰 YAML。
+装上 bundle 之后，**设置 → 资源门禁** 会出现一个页面。
+
+这个页面由 bundle 的**客户端半边**（`dsh.client` + `client.js`）注册，**不是**从 Host 配置自动生成的：设置里的每个页面都由客户端插件注册到 `settings.section`，只有 Host 半边的插件根本不会出现在那里——配置存在，但没有任何东西能显示或修改它。v0.3.0 补上客户端半边就是为了这件事。
+
+页面显示实时预算（提交内存、显存、安全并发）、硬件推导建议（带「填入推荐值」），以及每个阈值的可编辑字段和说明。读写走一条带自定义头的同源路由（`/resource-guard/api`，要求 `x-resource-guard-ui`），由它调用 Host 的 settings 服务，所以保存的值和手改配置完全等价。
+
+装新版本后刷新一次页面——客户端 bundle 在启动时加载。
 
 ### 配置依据文档
 
