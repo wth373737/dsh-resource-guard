@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Resource Guard">
+  <path d="M32 5.5 54.5 14v18.2c0 12.9-9.1 22.9-22.5 26.3C18.6 55.1 9.5 45.1 9.5 32.2V14z" fill="#1d4ed8"/>
+  <path d="M32 5.5 54.5 14v18.2c0 12.9-9.1 22.9-22.5 26.3V5.5z" fill="#2563eb"/>
+  <rect x="19" y="21.5" width="9" height="4" rx="2" fill="#ffffff"/>
+  <rect x="19" y="29.5" width="16" height="4" rx="2" fill="#ffffff"/>
+  <rect x="19" y="37.5" width="24" height="4" rx="2" fill="#ffffff" opacity="0.9"/>
+  <rect x="19" y="45.5" width="13" height="4" rx="2" fill="#ffffff" opacity="0.6"/>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Resource Guard",
+    "description": "Estimates a tool call's memory and VRAM cost before it runs, asks first when it is heavy, and tunes concurrency to this machine's hardware."
+  }
+}
