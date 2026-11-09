@@ -15,7 +15,7 @@ import { whenService } from './lib/when-service.js'
 
 export const inject = ['tools']
 
-export const VERSION = '0.3.5'
+export const VERSION = '0.3.6'
 
 // Loaded at module scope: the settings form is driven by this schema, and a
 // second schemastery copy would produce something the Host cannot project.
