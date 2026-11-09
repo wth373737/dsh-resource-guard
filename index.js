@@ -79,7 +79,7 @@ export function apply(ctx, raw) {
 
   function effectivePerWorker() {
     const stats = history.stats()
-    if (stats.entries >= 3 && Number.isFinite(stats.medianPeakGb) && stats.medianPeakGb > 0) {
+    if (stats.entries >= 2 && Number.isFinite(stats.medianPeakGb) && stats.medianPeakGb > 0) {
       return Math.min(32, Math.max(0.5, Number(stats.medianPeakGb.toFixed(1))))
     }
     return config.perWorkerGb

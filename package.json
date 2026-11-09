@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-resource-guard",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "Predict and gate memory/VRAM-heavy tool calls, and tune concurrency to this machine.",
