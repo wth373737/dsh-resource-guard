@@ -147,10 +147,16 @@ window.__ModuleLoader__.load({
     }
 
     function call(path, init) {
+      // Spread callers' options first, then attach headers: spreading after the
+      // merge replaced it wholesale whenever the caller passed its own headers
+      // (the save request did), dropping the fence header.
+      const options = init || {}
+      const extraHeaders = options.headers || {}
+      const { headers: _ignored, ...rest } = options
       return fetch(API + path, {
         credentials: 'same-origin',
-        headers: Object.assign({ [UI_HEADER]: '1' }, (init && init.headers) || {}),
-        ...init,
+        ...rest,
+        headers: Object.assign({ [UI_HEADER]: '1' }, extraHeaders),
       }).then(async (response) => {
         const payload = await response.json().catch(() => ({}))
         if (!response.ok || payload.ok === false) {
