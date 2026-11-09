@@ -15,7 +15,7 @@ import { whenService } from './lib/when-service.js'
 
 export const inject = ['tools']
 
-export const VERSION = '0.3.3'
+export const VERSION = '0.3.4'
 
 // Loaded at module scope: the settings form is driven by this schema, and a
 // second schemastery copy would produce something the Host cannot project.
@@ -93,6 +93,23 @@ export function apply(ctx, raw) {
       log,
     )
   }
+
+  // The settings service only describes plugin instances that registered a page
+  // policy; without this the entry is absent and saving cannot find its namespace.
+  // `auto: false` because this bundle ships its own page instead of the generated one.
+  whenService(
+    ctx,
+    'settings',
+    (settings) => {
+      try {
+        ctx.effect(() => settings.configure({ auto: false }))
+        log('info', 'settings page policy registered')
+      } catch (error) {
+        log('warn', 'settings.configure failed', { message: messageOf(error) })
+      }
+    },
+    log,
+  )
 
   if (config.injectBudget) {
     whenService(
