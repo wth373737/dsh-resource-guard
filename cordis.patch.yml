@@ -11,7 +11,9 @@
         vramAskRatio: 0.85
         vramDenyRatio: 0.97
         minEstimateGb: 4
+        perWorkerGb: 3.2
         breaker: true
         breakerRatio: 0.92
         injectBudget: true
         learn: true
+        autoTune: suggest

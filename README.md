@@ -59,18 +59,34 @@ Set these under `config` in the bundle's `cordis.patch.yml`; the plugin manager 
 | `vramAskRatio` | `0.85` | VRAM question threshold |
 | `vramDenyRatio` | `0.97` | VRAM refusal threshold |
 | `minEstimateGb` | `4` | Estimates below this are never gated |
+| `perWorkerGb` | `3.2` | Assumed peak commit of one worker when sizing safe concurrency; replaced by the measured median once history holds ≥ 3 samples |
 | `breaker` | `true` | Runtime monitoring |
 | `breakerRatio` | `0.92` | Observed commit ratio that counts as a breach |
 | `injectBudget` | `true` | Inject the live budget block |
 | `learn` | `true` | Feed measured peaks back into the estimator |
+| `autoTune` | `suggest` | `off` / `suggest` (write the rationale document only) / `apply` (also write the recommended values into this config) |
 | `tools` | `[]` | Extra tool names always treated as heavy |
 | `debug` | `false` | Also log to stderr |
+
+### Settings page
+
+Installing the bundle adds a **Settings → Resource Guard** form generated from the plugin's `Config` schema. Each field carries its explanation as help text, and changes apply live — no YAML editing needed.
+
+### Recommendation document
+
+At startup the plugin measures the machine and writes `$DSH_HOME/resource-guard/recommendation.md`: the recommended thresholds plus, for every one, the hardware fact it came from. For example:
+
+> `askRatio` → 0.78 — commit limit 66.9 GB ÷ 62.9 GB physical = 1.06, page file only 4 GB, so there is almost no overflow room and the ask line drops to 78%.
+
+`autoTune: suggest` (the default) only writes that document. `apply` also writes the values into this config once per hardware fingerprint, recorded in `applied.json`; `off` skips the whole step.
 
 ### State
 
 `$DSH_HOME/resource-guard/`
 
 - `history.json` — measured peaks per signature. Safe to delete; losing it only falls back to rule-only estimates.
+- `recommendation.md` — the hardware-derived suggestions for this machine, regenerated at each start.
+- `applied.json` — the hardware fingerprint of the last `autoTune: apply` run.
 - `guard.log` — latest run log, rotated at 512 KB.
 
 ### Known limits
@@ -78,7 +94,7 @@ Set these under `config` in the bundle's `cordis.patch.yml`; the plugin manager 
 - **Opaque commands are still guessed.** If concurrency is computed at runtime (read from a config, derived from CPU count), static analysis cannot see it. The runtime breaker is the backstop.
 - **VRAM is sampled slowly.** One `Get-Counter` measurement blocks for 1–1.5 s, so VRAM refreshes every 10 s and memory every 3 s. Short spikes can be missed.
 - **No hard kill.** v1 warns and asks the model to converge. Safely killing *only* the processes a call spawned needs process-tree ownership; killing the wrong PID is worse than the incident. Deferred to v2.
-- **No Config schema.** Values are range-clamped in `readConfig()` instead of zod-validated, so the plugin manager shows no settings form.
+- **Schema loading is best-effort.** The settings page needs the Harness's own `schemastery`; when it cannot be resolved the plugin still runs, just without the form.
 - **Two persistent PowerShell samplers**, roughly 40–60 MB each.
 - **The injected budget block is Chinese only.** The prompt context exposes no UI locale, so the block is not localized yet.
 
@@ -149,18 +165,34 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 | `vramAskRatio` | `0.85` | 显存询问线 |
 | `vramDenyRatio` | `0.97` | 显存拒绝线 |
 | `minEstimateGb` | `4` | 低于此估计不打扰 |
+| `perWorkerGb` | `3.2` | 计算安全并发时假定的单进程峰值；历史样本 ≥ 3 条后被实测中位数替代 |
 | `breaker` | `true` | 运行时监控 |
 | `breakerRatio` | `0.92` | 运行中提交占比警戒线 |
 | `injectBudget` | `true` | 是否注入预算区块 |
 | `learn` | `true` | 是否回填历史 |
+| `autoTune` | `suggest` | `off` / `suggest`（只生成依据文档）/ `apply`（同时把推荐值写进配置） |
 | `tools` | `[]` | 额外强制纳入门禁的工具名 |
 | `debug` | `false` | 同时写 stderr |
+
+### 设置页
+
+装上 bundle 之后，**设置 → 资源门禁** 会出现一个由 `Config` schema 自动生成的表单，每个字段都带说明文字，改完即生效，不用碰 YAML。
+
+### 配置依据文档
+
+插件在启动时实测本机硬件，写出 `$DSH_HOME/resource-guard/recommendation.md`：推荐阈值，以及**每一条阈值来自哪项硬件属性**。例如：
+
+> `askRatio` → 0.78 —— 提交上限 66.9 GB ÷ 物理 62.9 GB = 1.06，分页文件只有 4 GB，几乎没有溢出空间，所以询问线压到 78%。
+
+`autoTune: suggest`（默认）只生成这份文档；`apply` 会在硬件指纹变化后把上表写进配置，记录在 `applied.json`；`off` 完全跳过。
 
 ### 状态文件
 
 `$DSH_HOME/resource-guard/`
 
 - `history.json` —— 每个签名的实测峰值，可随时删，删了只是退回纯规则估算。
+- `recommendation.md` —— 本机的硬件推导建议，每次启动重新生成。
+- `applied.json` —— 最近一次 `autoTune: apply` 的硬件指纹。
 - `guard.log` —— 最近运行日志，超过 512 KB 自动轮转。
 
 ### 已知边界
@@ -168,7 +200,7 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 - **不透明命令仍然只能猜**：并发数若由运行时计算（读配置、按 CPU 核数动态决定），静态分析看不到，靠运行时熔断兜底。
 - **显存是慢采样**：一次 `Get-Counter` 要 1–1.5 秒，所以显存每 10 秒更新、内存每 3 秒，瞬时尖峰可能被漏掉。
 - **没有硬杀**：v1 只告警并请模型自行收敛。安全地只杀掉某次调用派生的进程需要进程树归属，误杀的代价比事故更大，留到 v2。
-- **没有 Config schema**：配置值在 `readConfig()` 里做范围钳制而非 zod 校验，所以插件管理器不显示配置表单。
+- **Schema 加载是尽力而为**：设置页依赖 Harness 自己的 `schemastery`；解析不到时插件照常运行，只是没有表单。
 - **两个常驻 PowerShell 采样进程**，各约 40–60 MB。
 
 ### 环境要求

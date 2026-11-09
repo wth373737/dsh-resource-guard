@@ -1,14 +1,37 @@
+import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
 import { readConfig } from './lib/config.js'
+import { buildConfigSchema, loadSchemastery } from './lib/config-schema.js'
 import { createLogger } from './lib/log.js'
 import { Probe } from './lib/probe.js'
 import { History } from './lib/history.js'
 import { analyzeCall } from './lib/estimate.js'
 import { judge, budgetText } from './lib/verdict.js'
+import { recommend, renderRecommendation } from './lib/tune.js'
 
 export const inject = ['tools']
+
+// Loaded at module scope: the settings page is projected from this schema, and
+// the projection only accepts the Harness's own schemastery instance.
+const SCHEMA = await loadSchemastery()
+export const Config = buildConfig(SCHEMA)
+
+function buildConfig(schema) {
+  if (!schema) {
+    process.stderr.write('[resource-guard] schemastery unavailable; settings page disabled\n')
+    return undefined
+  }
+  try {
+    return buildConfigSchema(schema)
+  } catch (error) {
+    process.stderr.write(
+      `[resource-guard] config schema failed: ${error instanceof Error ? error.message : String(error)}\n`,
+    )
+    return undefined
+  }
+}
 
 const TICK_MS = 1000
 const MIN_LEARNABLE_MS = 1200
@@ -18,11 +41,12 @@ const STALE_RECORD_MS = 30 * 60 * 1000
 /**
  * Predictive resource gate for the Harness.
  *
- * Two mechanisms, both fail-open:
  *   - `tools/pre-execute` estimates a heavy call and turns it into an approval
  *     question (or a refusal) before anything is spawned.
  *   - `tools/post-execute` reports the peak the call actually reached and feeds
  *     it back into the per-signature estimator.
+ *   - On startup the measured hardware becomes recommended thresholds, written
+ *     out with the reason for each number.
  */
 export function apply(ctx, raw) {
   const config = readConfig(raw)
@@ -34,6 +58,9 @@ export function apply(ctx, raw) {
   const history = new History(directory, log, config.learn)
   const active = new Map()
   let ticker = null
+  let tuned = false
+
+  probe.onHardware = () => scheduleTune()
 
   probe.start()
   ctx.effect(() => () => probe.dispose())
@@ -50,12 +77,81 @@ export function apply(ctx, raw) {
     )
   }
 
+  function effectivePerWorker() {
+    const stats = history.stats()
+    if (stats.entries >= 3 && Number.isFinite(stats.medianPeakGb) && stats.medianPeakGb > 0) {
+      return Math.min(32, Math.max(0.5, Number(stats.medianPeakGb.toFixed(1))))
+    }
+    return config.perWorkerGb
+  }
+
   function safeBudgetText() {
     try {
-      return budgetText(probe.snapshot(), probe.hardware(), config)
+      return budgetText(probe.snapshot(), probe.hardware(), config, effectivePerWorker())
     } catch {
       return '## 本机资源预算\n- 资源采样暂不可用；大任务请先自行确认并发与内存需求。'
     }
+  }
+
+  function scheduleTune(attempt = 0) {
+    if (tuned || config.autoTune === 'off') return
+    const snapshot = probe.snapshot()
+    // Wait for the first real sample: the fallback reports no page file, which
+    // would make the recommendation argue from a number that is not true here.
+    if (!snapshot.fresh && attempt < 20) {
+      const timer = setTimeout(() => scheduleTune(attempt + 1), 1000)
+      if (typeof timer.unref === 'function') timer.unref()
+      return
+    }
+    tuned = true
+    try {
+      const result = recommend({ snapshot, hardware: probe.hardware(), config, history })
+      const text = renderRecommendation({ ...result, at: new Date() })
+      const file = path.join(directory, 'recommendation.md')
+      fs.mkdirSync(directory, { recursive: true })
+      fs.writeFileSync(file, text, 'utf8')
+      log('info', 'recommendation written', { path: file, askRatio: result.values.askRatio })
+      if (config.autoTune === 'apply') applyRecommendation(result.values, snapshot)
+    } catch (error) {
+      log('warn', 'tune failed', { message: messageOf(error) })
+    }
+  }
+
+  function applyRecommendation(values, snapshot) {
+    const settings = ctx.get('settings')
+    if (!settings) {
+      log('warn', 'autoTune apply skipped: settings service absent')
+      return
+    }
+    const fingerprint = [
+      Math.round(snapshot.totalPhysGb),
+      Math.round(snapshot.commitLimitGb),
+      Math.round(snapshot.vramCapGb),
+    ].join('|')
+    const marker = path.join(directory, 'applied.json')
+    try {
+      const previous = JSON.parse(fs.readFileSync(marker, 'utf8'))
+      if (previous && previous.fingerprint === fingerprint) return
+    } catch {
+      // No marker yet: first application on this hardware.
+    }
+
+    const entries = settings.describe()
+    const mine = entries.find((entry) => String(entry.ns).includes('resource-guard'))
+    if (!mine) {
+      log('warn', 'autoTune apply: own entry not found')
+      return
+    }
+    Promise.resolve(settings.update(mine.ns, values))
+      .then(() => {
+        fs.writeFileSync(
+          marker,
+          JSON.stringify({ fingerprint, appliedAt: new Date().toISOString(), values }, null, 2),
+          'utf8',
+        )
+        log('info', 'recommendation applied to config', { ns: mine.ns })
+      })
+      .catch((error) => log('warn', 'autoTune apply failed', { message: messageOf(error) }))
   }
 
   function stopTicker() {
@@ -168,7 +264,7 @@ export function apply(ctx, raw) {
         active.delete(id)
         if (active.size === 0) stopTicker()
       }
-      if (record) note = observe(record, result)
+      if (record) note = observe(record)
     } catch (error) {
       log('error', 'post-execute failed', { message: messageOf(error) })
     }
@@ -178,7 +274,7 @@ export function apply(ctx, raw) {
     return appendNote(decision, result, note)
   })
 
-  function observe(record, result) {
+  function observe(record) {
     const snapshot = probe.snapshot()
     const durationMs = Date.now() - record.startedAt
     const peakCommitGb = Math.max(record.peakCommitGb, snapshot.commitUsedGb)
