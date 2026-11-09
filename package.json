@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "description": "Predict and gate memory/VRAM-heavy tool calls, and tune concurrency to this machine.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wth373737/dsh-resource-guard.git"
+  },
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",
@@ -15,7 +20,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {

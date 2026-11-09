@@ -30,6 +30,20 @@ The command line looked harmless. The damage was invisible until the machine was
 3. **Per-binary unit costs** — `qwen3-aligner` 6 GB/process (measured on this machine), Python + torch 3.2 GB, `ffmpeg` 1.2 GB, `ollama` scaled by model size.
 4. **History** — once a signature has run, the measured increment corrects the rule estimate.
 
+### Installation
+
+This is a local bundle, not a published npm package. The profile links to the checkout directory, so put it somewhere stable — not a temporary folder or a session workspace.
+
+1. Clone it:
+   ```bash
+   git clone https://github.com/wth373737/dsh-resource-guard.git
+   ```
+2. Install the bundle into the running profile **by absolute directory path** — through the plugin manager's `install_bundle`, or by asking the agent to do it with that path.
+3. **Restart DeepSeek Harness once.** Replacing an installed package only loads a fresh module generation on restart.
+4. Confirm it is live: the next request's system context carries a resource-budget block (currently Chinese) with commit, VRAM and a suggested concurrency.
+
+To update: `git pull` in the checkout, then restart. The profile keeps pointing at that directory, so nothing needs reinstalling.
+
 ### Configuration
 
 Set these under `config` in the bundle's `cordis.patch.yml`; the plugin manager reloads them.
@@ -66,6 +80,7 @@ Set these under `config` in the bundle's `cordis.patch.yml`; the plugin manager 
 - **No hard kill.** v1 warns and asks the model to converge. Safely killing *only* the processes a call spawned needs process-tree ownership; killing the wrong PID is worse than the incident. Deferred to v2.
 - **No Config schema.** Values are range-clamped in `readConfig()` instead of zod-validated, so the plugin manager shows no settings form.
 - **Two persistent PowerShell samplers**, roughly 40–60 MB each.
+- **The injected budget block is Chinese only.** The prompt context exposes no UI locale, so the block is not localized yet.
 
 ### Requirements
 
@@ -74,6 +89,10 @@ DeepSeek Harness with the plugin manager; Windows (the samplers use `GlobalMemor
 ### Uninstall
 
 Remove the `@local/dsh-resource-guard` bundle in the plugin manager, then delete `$DSH_HOME/resource-guard/`.
+
+### License
+
+MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 
 ---
 
@@ -100,6 +119,20 @@ Remove the `@local/dsh-resource-guard` bundle in the plugin manager, then delete
 2. **读被引用脚本的内容** —— 命令行里出现存在且 ≤ 1 MB 的 `*.py|ps1|sh|js|bat|cmd` 文件时，读前 64 KB 继续找并发数、二进制名和 torch/onnx 标记。这一层就是为上面那次事故加的：并发数根本不在命令行里。
 3. **按二进制给单价** —— `qwen3-aligner` 6 GB/进程（本机实测）、Python + torch 3.2 GB、`ffmpeg` 1.2 GB、`ollama` 按模型规模。
 4. **历史回填** —— 同一签名跑过之后，用实测增量修正规则估算。
+
+### 安装
+
+这不是发到 npm 的包，而是一个本地 bundle：profile 直接链接到仓库目录，所以别放在临时目录或会话工作区里。
+
+1. 克隆：
+   ```bash
+   git clone https://github.com/wth373737/dsh-resource-guard.git
+   ```
+2. 在运行中的 profile 里，用**绝对目录路径**安装（插件管理器的 `install_bundle`，或让代理代劳）。
+3. **重启一次 DeepSeek Harness**。替换已安装的包，只有在重启后才会加载新的模块代。
+4. 确认生效：下一次请求的系统上下文里会出现资源预算区块（提交 / 显存 / 建议并发）。
+
+更新：在克隆目录里 `git pull`，然后重启。profile 仍然指向同一个目录，不需要重装。
 
 ### 配置
 
@@ -145,3 +178,7 @@ Remove the `@local/dsh-resource-guard` bundle in the plugin manager, then delete
 ### 卸载
 
 插件管理器里移除 `@local/dsh-resource-guard` 这个 bundle，再删掉 `$DSH_HOME/resource-guard/`。
+
+### 许可
+
+MIT © 2026 wth373737，详见 [LICENSE](LICENSE)。
