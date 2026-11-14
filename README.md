@@ -92,7 +92,7 @@ At startup the plugin measures the machine and writes `$DSH_HOME/resource-guard/
 
 `$DSH_HOME/resource-guard/`
 
-- `history.json` — measured peaks per signature. Safe to delete; losing it only falls back to rule-only estimates.
+- `history.json` — for each signature, the *typical* cost (a running average, used for estimates) and the *peak* seen (used to warn). Safe to delete; losing it only falls back to rule-only estimates.
 - `recommendation.md` — the hardware-derived suggestions for this machine, regenerated at each start.
 - `applied.json` — the hardware fingerprint of the last `autoTune: apply` run.
 - `guard.log` — latest run log, rotated at 512 KB.
@@ -206,7 +206,7 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 
 `$DSH_HOME/resource-guard/`
 
-- `history.json` —— 每个签名的实测峰值，可随时删，删了只是退回纯规则估算。
+- `history.json` —— 每个签名的**典型值**（运行平均，用于估算）与**峰值**（用于告警）。可随时删，删了只是退回纯规则估算。
 - `recommendation.md` —— 本机的硬件推导建议，每次启动重新生成。
 - `applied.json` —— 最近一次 `autoTune: apply` 的硬件指纹。
 - `guard.log` —— 最近运行日志，超过 512 KB 自动轮转。
