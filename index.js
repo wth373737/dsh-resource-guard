@@ -15,7 +15,7 @@ import { whenService } from './lib/when-service.js'
 
 export const inject = ['tools']
 
-export const VERSION = '0.4.0'
+export const VERSION = '0.4.1'
 
 // Loaded at module scope: the settings form is driven by this schema, and a
 // second schemastery copy would produce something the Host cannot project.
@@ -407,3 +407,4 @@ function messageOf(error) {
   if (error instanceof Error) return error.message
   return String(error)
 }
+
