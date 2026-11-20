@@ -4,7 +4,7 @@
 // same-origin fenced route, which requires a custom header so a random website
 // cannot CSRF the settings API.
 window.__ModuleLoader__.load({
-  id: '@local/dsh-resource-guard',
+  id: 'dsh-resource-guard',
   factory(require) {
     const React = require('react')
     const h = React.createElement
@@ -417,7 +417,7 @@ window.__ModuleLoader__.load({
                   id: 'resource-guard',
                   order: 66,
                   label: TEXT.title,
-                  registrant: '@local/dsh-resource-guard',
+                  registrant: 'dsh-resource-guard',
                 },
                 SettingsPage,
               ),
