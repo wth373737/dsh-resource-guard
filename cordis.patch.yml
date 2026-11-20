@@ -1,6 +1,6 @@
 - insert:
     - id: resource-guard
-      name: dsh-resource-guard
+      name: dsh-plugin-resource-guard
       config:
         enabled: true
         mode: ask

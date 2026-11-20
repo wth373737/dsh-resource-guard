@@ -125,7 +125,7 @@ DeepSeek Harness with the plugin manager; Windows (the samplers use `GlobalMemor
 
 ### Uninstall
 
-Remove the `dsh-resource-guard` bundle in the plugin manager, then delete `$DSH_HOME/resource-guard/`.
+Remove the `dsh-plugin-resource-guard` bundle in the plugin manager, then delete `$DSH_HOME/resource-guard/`.
 
 ### License
 
@@ -251,7 +251,7 @@ github:wth373737/dsh-resource-guard
 
 ### 卸载
 
-插件管理器里移除 `dsh-resource-guard` 这个 bundle，再删掉 `$DSH_HOME/resource-guard/`。
+插件管理器里移除 `dsh-plugin-resource-guard` 这个 bundle，再删掉 `$DSH_HOME/resource-guard/`。
 
 ### 许可
 
