@@ -1,6 +1,6 @@
 - insert:
     - id: resource-guard
-      name: '@local/dsh-resource-guard'
+      name: dsh-resource-guard
       config:
         enabled: true
         mode: ask

@@ -32,17 +32,30 @@ The command line looked harmless. The damage was invisible until the machine was
 
 ### Installation
 
-This is a local bundle, not a published npm package. The profile links to the checkout directory, so put it somewhere stable — not a temporary folder or a session workspace.
+Two ways in. The plugin market and the install command use the first; the second is for working on the code.
+
+**From GitHub (recommended)**
+
+In DSH, open **Plugins → + Add plugin** and enter:
+
+```text
+github:wth373737/dsh-resource-guard
+```
+
+Then **restart DeepSeek Harness once** — a replaced package only loads a fresh module generation on restart.
+
+**From a local checkout (development)**
+
+A `link:` install points the profile at the directory itself, so edits are live after a restart and `git pull` is enough to update. Keep it somewhere stable — not a temporary folder or a session workspace.
 
 1. Clone it:
    ```bash
    git clone https://github.com/wth373737/dsh-resource-guard.git
    ```
 2. Install the bundle into the running profile **by absolute directory path** — through the plugin manager's `install_bundle`, or by asking the agent to do it with that path.
-3. **Restart DeepSeek Harness once.** Replacing an installed package only loads a fresh module generation on restart.
-4. Confirm it is live: the next request's system context carries a resource-budget block (currently Chinese) with commit, VRAM and a suggested concurrency.
+3. Restart DeepSeek Harness once.
 
-To update: `git pull` in the checkout, then restart. The profile keeps pointing at that directory, so nothing needs reinstalling.
+Either way, confirm it is live: the next request's system context carries a resource-budget block (currently Chinese) with commit, VRAM and a suggested concurrency.
 
 ### Configuration
 
@@ -112,7 +125,7 @@ DeepSeek Harness with the plugin manager; Windows (the samplers use `GlobalMemor
 
 ### Uninstall
 
-Remove the `@local/dsh-resource-guard` bundle in the plugin manager, then delete `$DSH_HOME/resource-guard/`.
+Remove the `dsh-resource-guard` bundle in the plugin manager, then delete `$DSH_HOME/resource-guard/`.
 
 ### License
 
@@ -146,17 +159,30 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 
 ### 安装
 
-这不是发到 npm 的包，而是一个本地 bundle：profile 直接链接到仓库目录，所以别放在临时目录或会话工作区里。
+两种装法：列表与插件市场用的是第一种，第二种用于改代码。
+
+**从 GitHub 安装（推荐）**
+
+在 DSH 里打开 **插件 → + 添加插件**，填：
+
+```text
+github:wth373737/dsh-resource-guard
+```
+
+装完**重启一次** DSH —— 替换已安装的包，只有重启后才会加载新的模块代。
+
+**从本地目录安装（开发用）**
+
+`link:` 安装会让 profile 直接指向那个目录，改完重启即生效，更新只需 `git pull`。所以别放在临时目录或会话工作区里。
 
 1. 克隆：
    ```bash
    git clone https://github.com/wth373737/dsh-resource-guard.git
    ```
 2. 在运行中的 profile 里，用**绝对目录路径**安装（插件管理器的 `install_bundle`，或让代理代劳）。
-3. **重启一次 DeepSeek Harness**。替换已安装的包，只有在重启后才会加载新的模块代。
-4. 确认生效：下一次请求的系统上下文里会出现资源预算区块（提交 / 显存 / 建议并发）。
+3. **重启一次 DeepSeek Harness**。
 
-更新：在克隆目录里 `git pull`，然后重启。profile 仍然指向同一个目录，不需要重装。
+两种装法都可以用同一句确认：下一次请求的系统上下文里会出现资源预算区块（提交 / 显存 / 建议并发）。
 
 ### 配置
 
@@ -225,7 +251,7 @@ MIT © 2026 wth373737 — see [LICENSE](LICENSE).
 
 ### 卸载
 
-插件管理器里移除 `@local/dsh-resource-guard` 这个 bundle，再删掉 `$DSH_HOME/resource-guard/`。
+插件管理器里移除 `dsh-resource-guard` 这个 bundle，再删掉 `$DSH_HOME/resource-guard/`。
 
 ### 许可
 
